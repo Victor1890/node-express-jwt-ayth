@@ -20,7 +20,7 @@ const login_get = async (req, res) => {};
 const signup_post = async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = await User.create({ email, password });
+    const user = new User({ email, password });
     res.status(201).json(user);
   } catch (err) {
     const error = handleErros(err);
