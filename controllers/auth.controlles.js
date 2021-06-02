@@ -1,30 +1,44 @@
 const User = require("../models/User");
+const jwt = require("jsonwebtoken");
 
 const handleErros = (err) => {
-  console.log(err.message, err.code);
-
   let error = { email: "", password: "" };
-
   if (err.message.includes("User validation failed")) {
     Object.values(err.errors).forEach(({ properties }) => {
       error[properties.path] = properties.message;
     });
   }
-
   return error;
 };
 
-const signup_get = async (req, res) => {};
-const login_get = async (req, res) => {};
+const maxAge = 3 * 24 * 60 * 60;
+
+const createToken = (id) => {
+  return jwt.sign({ id }, "key secret value", {
+    expiresIn: maxAge,
+  });
+};
+
+const signup_get = async (req, res) => {
+  res.render("signup");
+};
+const login_get = async (req, res) => {
+  res.render("login");
+};
 
 const signup_post = async (req, res) => {
   const { email, password } = req.body;
   try {
-    const user = new User({ email, password });
-    res.status(201).json(user);
+    const user = await User.create({ email, password });
+
+    const token = createToken(user._id);
+
+    res.cookie("jwt", token, { httpOnly: true, maxAge: maxAge * 1000 });
+
+    res.status(201).json({ user: user._id });
   } catch (err) {
-    const error = handleErros(err);
-    return res.status(400).json({ error });
+    const errors = handleErros(err);
+    return res.status(400).json({ errors });
   }
 };
 const login_post = async (req, res) => {
